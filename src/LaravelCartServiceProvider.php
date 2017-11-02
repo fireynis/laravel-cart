@@ -13,7 +13,9 @@ class LaravelCartServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $this->publishes([
+            __DIR__.'/Config/cart.php' => config_path('cart.php'),
+        ], 'config');
     }
 
     /**
@@ -23,6 +25,8 @@ class LaravelCartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind('cart', 'Fireynis\LaravelCart\Cart');
+
+        $this->mergeConfigFrom(__DIR__.'/Config/cart.php', 'cart');
     }
 }
