@@ -16,6 +16,8 @@ class LaravelCartServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/Config/cart.php' => config_path('cart.php'),
         ], 'config');
+
+        $this->loadMigrationsFrom(__DIR__.'/Migrations');
     }
 
     /**

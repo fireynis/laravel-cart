@@ -2,19 +2,19 @@
 
 namespace Fireynis\LaravelCart;
 
+use DB;
 use Fireynis\LaravelCart\Contracts\ItemInterface;
 use Fireynis\LaravelCart\Exceptions\InvalidCartDataException;
+use Illuminate\Session\SessionManager;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cookie;
 
+/**
+ * Fireynis\LaravelCart\Cart
+ *
+ */
 class Cart
 {
-
-    private $items;
-
-    private $name;
-
-    private $defaultTaxRate;
-
     //Values don't matter, just the keys. This means I don't have to array_flip each
     //time I want to validate the incoming array.
     private $mandatoryKeys = [
@@ -24,92 +24,105 @@ class Cart
         "quantity" => 1
     ];
 
-    /**
-     *
-     */
-    public function __construct()
+    const DEFAULT_CART_NAME = "fireynis_cart_default";
+
+    protected $session;
+
+    protected $cartName;
+
+    protected $items;
+
+    public function __construct(SessionManager $session)
     {
-        if (auth()->guest()) {
-            $this->name = 'cart';
+        $this->session = $session;
+
+        if ($this->workInIncognito()) {
+            $name = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
+            $this->restoreCart($name);
         } else {
-            $this->name = auth()->user()->getAuthIdentifier();
+            $this->cartName = $session->get('fireynis_cart.name', self::DEFAULT_CART_NAME);
         }
 
-        $this->defaultTaxRate = config('cart.tax_rate');
-
-        $items = \Session::get($this->name . '.items', null);
-        if (is_null($items)) {
-            $this->items = new Collection();
+        if ($this->alwaysStore()){
+            $this->restoreCart($this->cartName);
         } else {
-//            $cartItems = [];
-//            foreach ($items as $item) {
-//                $cartItems[] = Item::fromArray($item);
-//            }
-            $this->items = collect($items);
+            $this->items = collect($session->get($this->cartName . '.items', []));
         }
     }
 
-    public function add($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
+    public function setCartName(string $name)
     {
+        $this->cartName = $name;
+        $this->saveToSession();
+    }
 
-        if (is_array($itemData) && $this->isMulti($itemData)) {
+    public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
+    {
+        if (is_array($itemData) && $this->isMultidimensionalArray($itemData)) {
             foreach ($itemData as $itemDatum) {
-                $this->add($itemDatum);
+                $this->addItem($itemDatum);
             }
-            return;
+            return $this;
+        }
+        if (array_key_exists('item', $itemData) && $itemData['item'] instanceof Item) {
+            $item = $itemData['item'];
+        } elseif (array_key_exists('item', $itemData) && $itemData['item'] instanceof ItemInterface) {
+            $model = $itemData['item'];
+            $modelType = get_class($model);
+            $item = Item::fromValues($model->id(), $itemData['quantity'], $model->price(), $model->description(), $model->taxable(), config('cart.tax_rate'), $modelType);
+        } elseif (is_array($itemData)) {
+            $this->validate($itemData);
+            $item = Item::fromValues($itemData['id'], $itemData['quantity'], $itemData['price'], $itemData['description'], $taxable, config('cart.tax_rate'), config('cart.associated_model'));
         } else {
-
-            if (array_key_exists('item', $itemData) && $itemData['item'] instanceof Item) {
-                $item = $itemData['item'];
-            } elseif (array_key_exists('item', $itemData) && $itemData['item'] instanceof ItemInterface) {
-                $model = $itemData['item'];
-                $modelType = get_class($model);
-                $item = new Item($model->id(), $itemData['quantity'], $model->price(), $model->description(), $model->taxable(), $this->defaultTaxRate, $modelType);
-            } elseif (is_array($itemData)) {
-                $this->validate($itemData);
-                $item = new Item($itemData['id'], $itemData['quantity'], $itemData['price'], $itemData['description'], $taxable, $this->defaultTaxRate, config('cart.associated_model'));
-            } else {
-                throw new InvalidCartDataException("The data provided is not a model or array.");
-            }
-
-            if ($overrideTaxable) {
-                $item->setTaxable($taxable);
-            }
-            if ($overrideTaxRate) {
-                $item->setTaxRate($taxRate);
-            }
-
-            $this->items[uniqid()] = $item;
-            $this->itemsToSession();
+            throw new InvalidCartDataException("The data provided is not a model or array.");
         }
+
+        if ($overrideTaxable) {
+            $item->setTaxable($taxable);
+        }
+        if ($overrideTaxRate) {
+            $item->setTaxRate($taxRate);
+        }
+
+        $item->identifier = md5($item->item_id . microtime() . uniqid());
+
+        $this->items->put($item->identifier, $item);
+
+        $this->saveToSession();
+
+        return $this;
     }
 
-    public function update(string $identifier, int $quantity)
+    public function updateItem(string $identifier, int $quantity)
     {
-        if ($this->items->has($identifier)) {
-            $this->items->get($identifier)['quantity'] = $quantity;
-        }
-        $this->itemsToSession();
+        $item = $this->items->pull($identifier);
+        $item->quantity = $quantity;
+
+        $this->items->put($item->identifier, $item);
+
+        $this->saveToSession();
+
+        return $this;
     }
 
-    public function get(string $identifier)
+    public function removeItem(string $identifier)
+    {
+        $this->items->pull($identifier);
+
+        $this->saveToSession();
+    }
+
+    public function getItem(string $identifier)
     {
         return $this->items->get($identifier);
-    }
 
-    public function remove(string $identifier)
-    {
-        if ($this->items->has($identifier)) {
-            $this->items->forget($identifier);
-        }
-        $this->itemsToSession();
     }
 
     public function subTotal(bool $rounded = true): float
     {
         $subTotal = 0.00;
-        foreach ($this->items as $item) {
-            $subTotal += $item['price'] * $item['quantity'];
+        foreach ($this->cartItems() as $item) {
+            $subTotal += $item->price * $item->quantity;
         }
 
         return $this->formatNumber($subTotal, $rounded);
@@ -118,9 +131,9 @@ class Cart
     public function tax(bool $rounded = true): float
     {
         $taxTotal = 0.00;
-        foreach ($this->items as $item) {
-            if ($item['taxable']) {
-                $taxTotal += ($item['price'] * $item['quantity']) * ($item['taxRate'] / 100);
+        foreach ($this->cartItems() as $item) {
+            if ($item->taxable) {
+                $taxTotal += ($item->price * $item->quantity) * ($item->taxRate / 100);
             }
         }
 
@@ -132,28 +145,90 @@ class Cart
         return $this->formatNumber($this->subTotal(false) + $this->tax(false), $rounded);
     }
 
-    public function getCartItems(): Collection
+    public function count()
+    {
+        return $this->items->count();
+    }
+
+    public function cartItems(): Collection
     {
         return $this->items;
     }
 
-    private function formatNumber(float $number, bool $rounded = true): float
+    public function store(string $name = null)
     {
-        if ($rounded) {
-            return number_format(round($number, config('cart.number_format.decimal_places'), config('cart.number_format.rounding_preference')), config('cart.number_format.decimal_places'), '.', config('cart.number_format.thousand_separator'));
-        } else {
-            return number_format($number, config('cart.number_format.decimal_places'), '.', config('cart.number_format.thousand_separator'));
+        if (!is_null($name)) {
+            $this->setCartName($name);
+        } else if ($this->cartName() == self::DEFAULT_CART_NAME) {
+            $this->setCartName(md5(uniqid() . microtime()));
         }
+
+        $date = date('Y-m-d h:i:s', time());
+        $cart_id = $this->getConnection()->where('name', $this->cartName)->value('id');
+
+        if (is_null($cart_id)) {
+            $cart_id = $this->getConnection()->insertGetId(
+                [
+                    'name' => $this->cartName,
+                    'created_at' => date('Y-m-d h:i:s', $date),
+                    'updated_at' => date('Y-m-d h:i:s', $date)
+                ]
+            );
+        } else {
+            $this->getConnection()->where('name', $this->cartName)->update(['updated_at' => $date]);
+        }
+
+        Item::unguard();
+        foreach ($this->items as $item) {
+            $item->cart_id = $cart_id;
+            Item::updateOrInsert(['identifier' => $item->identifier], $item->toArray());
+        }
+        Item::reguard();
+
+        $ids = $this->items->pluck('identifier')->all();
+
+        DB::connection($this->getConnectionName())
+            ->table(config('cart.items_table_name'))
+            ->where('cart_id', '=', $cart_id)
+            ->whereNotIn('identifier', $ids)
+            ->delete();
+
+        return $this;
     }
 
-    private function itemsToSession()
+    public function restoreCart(string $name)
     {
-        \Session::forget($this->name . '.items');
-        \Session::put($this->name . '.items', $this->items);
-        \Session::save();
+        $this->cartName = $name;
+        $cart_id = $this->getConnection()->where('name', $this->cartName)->value('id');
+
+        if (!is_null($cart_id)) {
+            $this->items = Item::whereCartId($cart_id)->get();
+        }
+        $this->saveToSession();
+        return $this;
     }
 
-    private function isMulti($array): bool
+    public function cartName(): string
+    {
+        return !is_null($this->cartName) ? $this->cartName : self::DEFAULT_CART_NAME;
+    }
+
+    private function getConnection()
+    {
+        return DB::connection($this->getConnectionName())->table($this->getTableName());
+    }
+
+    private function getConnectionName()
+    {
+        return config('cart.db_connection');
+    }
+
+    private function getTableName()
+    {
+        return config('cart.cart_table_name');
+    }
+
+    private function isMultidimensionalArray($array): bool
     {
         foreach ($array as $item) {
             if (is_array($item)) {
@@ -171,4 +246,33 @@ class Cart
         }
     }
 
+    private function formatNumber(float $number, bool $rounded = true): float
+    {
+        if ($rounded) {
+            return number_format(round($number, config('cart.number_format.decimal_places'), config('cart.number_format.rounding_preference')), config('cart.number_format.decimal_places'), '.', config('cart.number_format.thousand_separator'));
+        } else {
+            return $number;
+        }
+    }
+
+    private function alwaysStore(): bool
+    {
+        return config('cart.always_store');
+    }
+
+    private function workInIncognito()
+    {
+        return config('cart.work_in_incognito');
+    }
+
+    private function saveToSession()
+    {
+        $this->session->put('fireynis_cart.name', $this->cartName);
+        $this->session->put($this->cartName() . '.items', $this->items);
+        $this->session->save();
+
+        if ($this->alwaysStore() || $this->workInIncognito()) {
+            $this->store();
+        }
+    }
 }

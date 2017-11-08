@@ -11,27 +11,62 @@ namespace Fireynis\LaravelCart;
 
 use Fireynis\LaravelCart\Contracts\ItemInterface;
 use Fireynis\LaravelCart\Exceptions\InvalidClassTypeException;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
-class Item implements Arrayable, Jsonable, ItemInterface
+/**
+ * Fireynis\LaravelCart\Item
+ *
+ * @property int $id
+ * @property int $cart_id
+ * @property int $item_id
+ * @property string $identifier
+ * @property string $description
+ * @property float $price
+ * @property int $quantity
+ * @property int $taxable
+ * @property int $tax_rate
+ * @property string|null $model_type
+ * @property \Carbon\Carbon|null $created_at
+ * @property \Carbon\Carbon|null $updated_at
+ * @method static Builder|Item whereCartId($value)
+ * @method static Builder|Item whereCreatedAt($value)
+ * @method static Builder|Item whereDescription($value)
+ * @method static Builder|Item whereId($value)
+ * @method static Builder|Item whereIdentifier($value)
+ * @method static Builder|Item whereItemId($value)
+ * @method static Builder|Item whereModelType($value)
+ * @method static Builder|Item wherePrice($value)
+ * @method static Builder|Item whereQuantity($value)
+ * @method static Builder|Item whereTaxRate($value)
+ * @method static Builder|Item whereTaxable($value)
+ * @method static Builder|Item whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+class Item extends Model implements ItemInterface
 {
-    //TODO: store identifier for item.
-    private $id, $quantity, $price, $description, $taxable, $taxRate;
+    protected $guarded = ['id', 'identifier'];
 
-    private $modelType;
-
-    public function __construct($id, $quantity, $price, $description, $taxable, $taxrate, $modelType = null)
+    public function __construct(array $attributes = [])
     {
-        $this->id = $id;
-        $this->quantity = $quantity;
-        $this->price = $price;
-        $this->description = $description;
-        $this->taxable = $taxable;
-        $this->taxRate = $taxrate;
+        parent::__construct($attributes);
+        $this->table = config('cart.items_table_name');
+        $this->connection = config('cart.db_connection');
+    }
+
+    public static function fromValues($id, $quantity, $price, $description, $taxable, $taxRate, $modelType = null)
+    {
+        $model = new self();
+        $model->item_id = $id;
+        $model->quantity = $quantity;
+        $model->price = $price;
+        $model->description = $description;
+        $model->taxable = $taxable;
+        $model->tax_rate = $taxRate;
         if (!is_null($modelType)) {
-            $this->setModel($modelType);
+            $model->setModel($modelType);
         }
+        return $model;
     }
 
     public function setTaxable(bool $taxable)
@@ -41,41 +76,12 @@ class Item implements Arrayable, Jsonable, ItemInterface
 
     public function setTaxRate(int $rate)
     {
-        $this->taxRate = $rate;
+        $this->tax_rate = $rate;
     }
 
     public static function fromArray(array $data)
     {
-        return new self($data['id'], $data['quantity'], $data['price'], $data['description'], $data['taxable'], $data['taxRate'], $data['modelType']);
-    }
-
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        return [
-            'id' => $this->id,
-            'quantity' => $this->quantity,
-            'price' => $this->price,
-            'description' => $this->description,
-            'taxable' => $this->taxable,
-            'taxRate' => $this->taxRate,
-            'modelType' => $this->modelType
-        ];
-    }
-
-    /**
-     * Convert the object to its JSON representation.
-     *
-     * @param  int $options
-     * @return string
-     */
-    public function toJson($options = 0)
-    {
-        return json_encode($this->toArray(), $options);
+        return Item::fromValues($data['id'], $data['quantity'], $data['price'], $data['description'], $data['taxable'], $data['taxRate'], $data['modelType']);
     }
 
     /**
@@ -116,7 +122,7 @@ class Item implements Arrayable, Jsonable, ItemInterface
      */
     public function id(): int
     {
-        return $this->id;
+        return $this->item_id;
     }
 
     /**
@@ -126,13 +132,13 @@ class Item implements Arrayable, Jsonable, ItemInterface
      */
     public function taxRate(): int
     {
-        return $this->taxRate;
+        return $this->tax_rate;
     }
 
     public function model()
     {
-        if (!is_null($this->modelType)) {
-            return with(new $this->modelType)->find($this->id);
+        if (!is_null($this->model_type)) {
+            return with(new $this->model_type)->find($this->item_id);
         }
         return null;
     }
@@ -140,7 +146,7 @@ class Item implements Arrayable, Jsonable, ItemInterface
     public function setModel($modelType)
     {
         if (is_string($modelType) && class_exists($modelType)) {
-            $this->modelType = $modelType;
+            $this->model_type = $modelType;
         } else {
             throw new InvalidClassTypeException("The class ".$modelType." does not exist");
         }

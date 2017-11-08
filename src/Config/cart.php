@@ -17,7 +17,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Application Name
+    | Associated Model
     |--------------------------------------------------------------------------
     |
     | This value will set the name of the model class that your products are
@@ -29,7 +29,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Application Name
+    | Always store
+    |--------------------------------------------------------------------------
+    |
+    | If you always want the cart to persist in the DB connection you assign,
+    | set this to true. Otherwise it will exist in Session until you call
+    | the store function.
+    |
+    */
+
+    'always_store' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Work in incognito / private browsing
+    |--------------------------------------------------------------------------
+    |
+    | Normally the cart is stored in session, but this will not work for
+    | private browsing. Set this to true to use a cookie and persist the cart
+    | to the database after every modification.
+    |
+    */
+
+    'work_in_incognito' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Number Format
     |--------------------------------------------------------------------------
     |
     | The following dictate the format the number will take on return. The
@@ -41,5 +67,30 @@ return [
         'decimal_places' => 2,
         'thousand_separator' => " ",
         'rounding_preference' => PHP_ROUND_HALF_UP
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Connection
+    |--------------------------------------------------------------------------
+    |
+    | This determines which defined database connection will be used to
+    | create the tables used for storage of the cart.
+    |
+    */
+
+    'db_connection' => 'mysql',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Table Names
+    |--------------------------------------------------------------------------
+    |
+    | Here you can replace the names of the table to prevent a local clash
+    | of your own tables.
+    |
+    */
+
+    'cart_table_name' => 'carts',
+    'items_table_name' => 'cart_items',
 ];
