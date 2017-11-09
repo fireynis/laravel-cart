@@ -1,6 +1,6 @@
 {
-    "name": "Fireynis/LaravelCart",
-    "type": "library",
+    "name": "fireynis/laravel-cart",
+    "type": "Simple cart with Laravel integration",
     "description": "Laravel cart utility",
     "keywords": [
         "Fireynis",
@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "~5.6|~7.0",
+        "php": "^7.0",
         "illuminate/database": "^5.5",
         "illuminate/support": "~5.1"
     },
