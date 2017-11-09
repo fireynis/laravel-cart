@@ -268,6 +268,9 @@ class Cart
         if (($this->alwaysStore() || $this->workInIncognito()) && !$skipStore) {
             $this->store();
         }
+        if ($this->workInIncognito()) {
+            Cookie::queue(Cookie::make('fireynis_cart', $this->cartName, config('cart.cookie_time_exist')));
+        }
         $this->session->put('fireynis_cart.name', $this->cartName);
         $this->session->put($this->cartName() . '.items', $this->items);
         $this->session->save();

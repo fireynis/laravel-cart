@@ -47,11 +47,14 @@ return [
     |
     | Normally the cart is stored in session, but this will not work for
     | private browsing. Set this to true to use a cookie and persist the cart
-    | to the database after every modification.
+    | to the database after every modification. Also set you can set the length
+    | time a cookie will persist before expiring here.
     |
     */
 
     'work_in_incognito' => false,
+
+    'cookie_time_exist' => 1440,
 
     /*
     |--------------------------------------------------------------------------
