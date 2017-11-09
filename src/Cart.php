@@ -202,6 +202,7 @@ class Cart
         if (!is_null($cart_id)) {
             $this->items = Item::whereCartId($cart_id)->get();
         }
+        $this->items = $this->items->keyBy('identifier');
         $this->saveToSession(true);
         return $this;
     }
