@@ -35,18 +35,16 @@ class Cart
     public function __construct(SessionManager $session)
     {
         $this->session = $session;
+        $this->items = collect($session->get($this->cartName . '.items', []));
 
         if ($this->workInIncognito()) {
-            $name = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
-            $this->restoreCart($name);
+            $this->cartName = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
         } else {
             $this->cartName = $session->get('fireynis_cart.name', self::DEFAULT_CART_NAME);
         }
 
-        if ($this->alwaysStore()){
+        if ($this->alwaysStore() || $this->workInIncognito()){
             $this->restoreCart($this->cartName);
-        } else {
-            $this->items = collect($session->get($this->cartName . '.items', []));
         }
     }
 
@@ -204,7 +202,7 @@ class Cart
         if (!is_null($cart_id)) {
             $this->items = Item::whereCartId($cart_id)->get();
         }
-        $this->saveToSession();
+        $this->saveToSession(true);
         return $this;
     }
 
@@ -265,14 +263,13 @@ class Cart
         return config('cart.work_in_incognito');
     }
 
-    private function saveToSession()
+    private function saveToSession(bool $skipStore = false)
     {
+        if (($this->alwaysStore() || $this->workInIncognito()) && !$skipStore) {
+            $this->store();
+        }
         $this->session->put('fireynis_cart.name', $this->cartName);
         $this->session->put($this->cartName() . '.items', $this->items);
         $this->session->save();
-
-        if ($this->alwaysStore() || $this->workInIncognito()) {
-            $this->store();
-        }
     }
 }
