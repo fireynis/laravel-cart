@@ -170,8 +170,8 @@ class Cart
             $cart_id = $this->getConnection()->insertGetId(
                 [
                     'name' => $this->cartName,
-                    'created_at' => date('Y-m-d h:i:s', $date),
-                    'updated_at' => date('Y-m-d h:i:s', $date)
+                    'created_at' => $date,
+                    'updated_at' => $date
                 ]
             );
         } else {
