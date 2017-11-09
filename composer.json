@@ -1,6 +1,6 @@
 {
     "name": "fireynis/laravel-cart",
-    "type": "Simple cart with Laravel integration",
+    "type": "library",
     "description": "Laravel cart utility",
     "keywords": [
         "Fireynis",
@@ -41,7 +41,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0-dev"
+            "dev-master": "0.10-dev"
         },
         "laravel": {
             "providers": [
