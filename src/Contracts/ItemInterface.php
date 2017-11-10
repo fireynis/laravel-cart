@@ -45,5 +45,5 @@ interface ItemInterface
      *
      * @return int
      */
-    public function id(): int;
+    public function uniqueId(): int;
 }

@@ -115,17 +115,6 @@ class Item extends Model implements ItemInterface
     }
 
     /**
-     * Returns the primary key that could be used to
-     * obtain an object from the database.
-     *
-     * @return int
-     */
-    public function id(): int
-    {
-        return $this->item_id;
-    }
-
-    /**
      * Returns the rate it is taxed at.
      *
      * @return int
@@ -133,6 +122,17 @@ class Item extends Model implements ItemInterface
     public function taxRate(): int
     {
         return $this->tax_rate;
+    }
+
+    /**
+     * Returns the primary key that could be used to
+     * obtain an object from the database.
+     *
+     * @return int
+     */
+    public function uniqueId(): int
+    {
+        return $this->item_id;
     }
 
     public function model()
