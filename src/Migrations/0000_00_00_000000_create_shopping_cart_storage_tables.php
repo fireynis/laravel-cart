@@ -43,7 +43,7 @@ class CreateShoppingCartStorageTables extends Migration
      */
     public function down()
     {
-        Schema::connection(config('cart.db_connection'))->dropIfExists(config('cart.items_table_name'));
+        Schema::connection(config('cart.db_connection'))->dropIfExists(config('cart.cart_table_name'));
         Schema::connection(config('cart.db_connection'))->dropIfExists(config('cart.items_table_name'));
     }
 }
