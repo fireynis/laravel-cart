@@ -24,7 +24,7 @@ class CreateShoppingCartStorageTables extends Migration
             $table->unsignedBigInteger('cart_id');
             $table->unsignedInteger('item_id');
             $table->string('identifier')->unique();
-            $table->string('description');
+            $table->longText('description');
             $table->float('price', 10, 2);
             $table->unsignedInteger('quantity');
             $table->boolean('taxable');
