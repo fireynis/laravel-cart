@@ -21,7 +21,7 @@ class CreateShoppingCartStorageTables extends Migration
 
         Schema::connection(config('cart.db_connection'))->create(config('cart.items_table_name'), function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedInteger('cart_id');
+            $table->unsignedBigInteger('cart_id');
             $table->unsignedInteger('item_id');
             $table->string('identifier')->unique();
             $table->string('description');
