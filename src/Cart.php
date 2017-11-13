@@ -154,7 +154,7 @@ class Cart
 
     public function count()
     {
-        return $this->items->count();
+        return $this->items->sum('quantity');
     }
 
     public function cartItems(): Collection
