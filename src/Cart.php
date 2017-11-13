@@ -37,19 +37,21 @@ class Cart
     public function __construct(SessionManager $session)
     {
         $this->session = $session;
-        $this->items = collect($session->get($this->cartName . '.items', []));
+        if (!app()->runningInConsole()) {
+            $this->items = collect($session->get($this->cartName . '.items', []));
 
-        if ($this->workInIncognito()) {
-            $this->cartName = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
-        } else {
-            $this->cartName = $session->get('fireynis_cart.name', self::DEFAULT_CART_NAME);
+            if ($this->workInIncognito()) {
+                $this->cartName = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
+            } else {
+                $this->cartName = $session->get('fireynis_cart.name', self::DEFAULT_CART_NAME);
+            }
+
+            if ($this->alwaysStore() || $this->workInIncognito()) {
+                $this->restoreCart($this->cartName);
+            }
+
+            $this->autoDelete = null;
         }
-
-        if ($this->alwaysStore() || $this->workInIncognito()) {
-            $this->restoreCart($this->cartName);
-        }
-
-        $this->autoDelete = null;
     }
 
     public function setCartName(string $name)
