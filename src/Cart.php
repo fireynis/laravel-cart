@@ -230,7 +230,7 @@ class Cart
             Item::unguard();
             foreach ($this->items as $item) {
                 $item->cart_id = $cart_id;
-                Item::where('cart_id', $cart_id);
+                Item::where('cart_id', $cart_id)->delete();
             }
             Item::reguard();
         }
