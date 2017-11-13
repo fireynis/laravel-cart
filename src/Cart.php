@@ -76,7 +76,7 @@ class Cart
         } elseif (array_key_exists('item', $itemData) && $itemData['item'] instanceof ItemInterface) {
             $model = $itemData['item'];
             $modelType = get_class($model);
-            $item = Item::fromValues($model->id(), $itemData['quantity'], $model->price(), $model->description(), $model->taxable(), config('cart.tax_rate'), $modelType);
+            $item = Item::fromValues($model->uniqueId(), $itemData['quantity'], $model->price(), $model->description(), $model->taxable(), config('cart.tax_rate'), $modelType);
         } elseif (is_array($itemData)) {
             $this->validate($itemData);
             $item = Item::fromValues($itemData['id'], $itemData['quantity'], $itemData['price'], $itemData['description'], $taxable, config('cart.tax_rate'), config('cart.associated_model'));
