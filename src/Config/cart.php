@@ -58,6 +58,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Auto Delete
+    |--------------------------------------------------------------------------
+    |
+    | If always storing a cart it is a good idea to allow auto deletion to
+    | occur. This is overridable by setting auto delete via
+    | $cart->setAutoDelete(true/false). It will only old that for the current
+    | request.
+    |
+    */
+
+    'auto_delete' => true,
+    'auto_delete_time' => '2 weeks',
+
+    /*
+    |--------------------------------------------------------------------------
     | Number Format
     |--------------------------------------------------------------------------
     |

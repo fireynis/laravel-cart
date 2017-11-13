@@ -2,6 +2,7 @@
 
 namespace Fireynis\LaravelCart;
 
+use Fireynis\LaravelCart\Commands\RemoveOldCarts;
 use Illuminate\Support\ServiceProvider;
 
 class LaravelCartServiceProvider extends ServiceProvider
@@ -18,6 +19,12 @@ class LaravelCartServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->loadMigrationsFrom(__DIR__.'/Migrations');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                RemoveOldCarts::class,
+            ]);
+        }
     }
 
     /**

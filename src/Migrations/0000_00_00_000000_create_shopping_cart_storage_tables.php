@@ -16,6 +16,7 @@ class CreateShoppingCartStorageTables extends Migration
         Schema::connection(config('cart.db_connection'))->create(config('cart.cart_table_name'), function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->unique();
+            $table->boolean('auto_delete')->default(true);
             $table->timestamps();
         });
 

@@ -2,12 +2,12 @@
 
 namespace Fireynis\LaravelCart;
 
-use DB;
 use Fireynis\LaravelCart\Contracts\ItemInterface;
 use Fireynis\LaravelCart\Exceptions\InvalidCartDataException;
 use Illuminate\Session\SessionManager;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Fireynis\LaravelCart\Cart
@@ -32,6 +32,8 @@ class Cart
 
     protected $items;
 
+    protected $autoDelete;
+
     public function __construct(SessionManager $session)
     {
         $this->session = $session;
@@ -43,15 +45,22 @@ class Cart
             $this->cartName = $session->get('fireynis_cart.name', self::DEFAULT_CART_NAME);
         }
 
-        if ($this->alwaysStore() || $this->workInIncognito()){
+        if ($this->alwaysStore() || $this->workInIncognito()) {
             $this->restoreCart($this->cartName);
         }
+
+        $this->autoDelete = null;
     }
 
     public function setCartName(string $name)
     {
         $this->cartName = $name;
         $this->saveToSession();
+    }
+
+    public function setAutoDelete(bool $autoDelete)
+    {
+        $this->autoDelete = $autoDelete;
     }
 
     public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
@@ -161,6 +170,12 @@ class Cart
             $this->setCartName(md5(uniqid() . microtime()));
         }
 
+        if (!is_null($this->autoDelete)) {
+            $autoDelete = $this->autoDelete;
+        } else {
+            $autoDelete = config('cart.auto_delete');
+        }
+
         $date = date('Y-m-d h:i:s', time());
         $cart_id = $this->getConnection()->where('name', $this->cartName)->value('id');
 
@@ -168,6 +183,7 @@ class Cart
             $cart_id = $this->getConnection()->insertGetId(
                 [
                     'name' => $this->cartName,
+                    'auto_delete' => $autoDelete,
                     'created_at' => $date,
                     'updated_at' => $date
                 ]
@@ -205,6 +221,20 @@ class Cart
         $this->items = $this->items->keyBy('identifier');
         $this->saveToSession(true);
         return $this;
+    }
+
+    public function delete()
+    {
+        $cart_id = $this->getConnection()->where('name', $this->cartName)->value('id');
+        if (!is_null($cart_id)) {
+            Item::unguard();
+            foreach ($this->items as $item) {
+                $item->cart_id = $cart_id;
+                Item::where('cart_id', $cart_id);
+            }
+            Item::reguard();
+        }
+        $this->getConnection()->where('name', $this->cartName)->delete();
     }
 
     public function cartName(): string
