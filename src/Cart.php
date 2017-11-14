@@ -38,7 +38,6 @@ class Cart
     {
         $this->session = $session;
         if (!app()->runningInConsole()) {
-            $this->items = collect($session->get($this->cartName . '.items', []));
 
             if ($this->workInIncognito()) {
                 $this->cartName = Cookie::get('fireynis_cart', self::DEFAULT_CART_NAME);
@@ -48,6 +47,8 @@ class Cart
 
             if ($this->alwaysStore() || $this->workInIncognito()) {
                 $this->restoreCart($this->cartName);
+            } else {
+                $this->items = collect($session->get($this->cartName . '.items', []));
             }
 
             $this->autoDelete = null;
@@ -219,6 +220,8 @@ class Cart
 
         if (!is_null($cart_id)) {
             $this->items = Item::whereCartId($cart_id)->get();
+        } else {
+            $this->items = new Collection();
         }
         $this->items = $this->items->keyBy('identifier');
         $this->saveToSession(true);
@@ -302,7 +305,7 @@ class Cart
             $this->store();
         }
         if ($this->workInIncognito()) {
-            Cookie::queue(Cookie::make('fireynis_cart', $this->cartName, config('cart.cookie_time_exist')));
+            Cookie::queue('fireynis_cart', $this->cartName, config('cart.cookie_time_exist'));
         }
         $this->session->put('fireynis_cart.name', $this->cartName);
         $this->session->put($this->cartName() . '.items', $this->items);
