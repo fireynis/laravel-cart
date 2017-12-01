@@ -59,11 +59,13 @@ class Cart
     {
         $this->cartName = $name;
         $this->saveToSession();
+        return $this;
     }
 
     public function setAutoDelete(bool $autoDelete)
     {
         $this->autoDelete = $autoDelete;
+        return $this;
     }
 
     public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
@@ -120,6 +122,7 @@ class Cart
         $this->items->pull($identifier);
 
         $this->saveToSession();
+        return $this;
     }
 
     public function getItem(string $identifier)
