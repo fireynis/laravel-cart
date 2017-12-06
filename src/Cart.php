@@ -146,7 +146,7 @@ class Cart
         $taxTotal = 0.00;
         foreach ($this->cartItems() as $item) {
             if ($item->taxable) {
-                $taxTotal += ($item->price * $item->quantity) * ($item->taxRate / 100);
+                $taxTotal += ($item->price() * $item->quantity) * ($item->taxRate() / 100);
             }
         }
 
