@@ -59,13 +59,11 @@ class Cart
     {
         $this->cartName = $name;
         $this->saveToSession();
-        return $this;
     }
 
     public function setAutoDelete(bool $autoDelete)
     {
         $this->autoDelete = $autoDelete;
-        return $this;
     }
 
     public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
@@ -122,7 +120,6 @@ class Cart
         $this->items->pull($identifier);
 
         $this->saveToSession();
-        return $this;
     }
 
     public function getItem(string $identifier)
@@ -135,7 +132,7 @@ class Cart
     {
         $subTotal = 0.00;
         foreach ($this->cartItems() as $item) {
-            $subTotal += $item->price * $item->quantity;
+            $subTotal += $item->price() * $item->quantity;
         }
 
         return $this->formatNumber($subTotal, $rounded);
@@ -286,7 +283,7 @@ class Cart
     private function formatNumber(float $number, bool $rounded = true): float
     {
         if ($rounded) {
-            return number_format(round($number, config('cart.number_format.decimal_places'), config('cart.number_format.rounding_preference')), config('cart.number_format.decimal_places'), '.', config('cart.number_format.thousand_separator'));
+            return number_format(round($number, config('cart.number_format.decimal_places'), config('cart.number_format.rounding_preference')), config('cart.number_format.decimal_places'), '.', '');
         } else {
             return $number;
         }
