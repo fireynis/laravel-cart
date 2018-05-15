@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $quantity
  * @property int $taxable
  * @property int $tax_rate
+ * @property int $shipping
  * @property string|null $model_type
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
@@ -91,6 +92,9 @@ class Item extends Model implements ItemInterface
      */
     public function description(): string
     {
+        if ($this->modelIsItem()) {
+            return $this->model()->description();
+        }
         return $this->description;
     }
 
@@ -101,6 +105,9 @@ class Item extends Model implements ItemInterface
      */
     public function price(): float
     {
+        if ($this->modelIsItem()) {
+            return $this->model()->price();
+        }
         return $this->price;
     }
 
@@ -111,6 +118,9 @@ class Item extends Model implements ItemInterface
      */
     public function taxable(): bool
     {
+        if ($this->modelIsItem()) {
+            return $this->model()->taxable();
+        }
         return $this->taxable;
     }
 
@@ -121,6 +131,9 @@ class Item extends Model implements ItemInterface
      */
     public function taxRate(): int
     {
+        if ($this->modelIsItem()) {
+            return $this->model()->taxRate();
+        }
         return $this->tax_rate;
     }
 
@@ -132,6 +145,9 @@ class Item extends Model implements ItemInterface
      */
     public function uniqueId(): int
     {
+        if ($this->modelIsItem()) {
+            return $this->model()->uniqueId();
+        }
         return $this->item_id;
     }
 
@@ -150,5 +166,26 @@ class Item extends Model implements ItemInterface
         } else {
             throw new InvalidClassTypeException("The class ".$modelType." does not exist");
         }
+    }
+
+    private function modelIsItem(): bool
+    {
+        if (!is_null($this->model()) && $this->model() instanceof ItemInterface) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the cost per item for shipping.
+     *
+     * @return float
+     */
+    public function shipping(): float
+    {
+        if ($this->modelIsItem()) {
+            return $this->model()->shipping();
+        }
+        return $this->shipping;
     }
 }

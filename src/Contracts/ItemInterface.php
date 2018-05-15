@@ -46,4 +46,11 @@ interface ItemInterface
      * @return int
      */
     public function uniqueId(): int;
+
+    /**
+     * Returns the cost per item for shipping.
+     *
+     * @return float
+     */
+    public function shipping(): float;
 }

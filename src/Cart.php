@@ -138,6 +138,15 @@ class Cart
         return $this->formatNumber($subTotal, $rounded);
     }
 
+    public function shipping(bool $rounded = true): float
+    {
+        $shipping = 0.00;
+        foreach ($this->cartItems() as $item) {
+            $shipping += $item->shipping() * $item->quantity;
+        }
+        return $this->formatNumber($shipping, $rounded);
+    }
+
     public function tax(bool $rounded = true): float
     {
         $taxTotal = 0.00;
@@ -152,7 +161,7 @@ class Cart
 
     public function total(bool $rounded = true): float
     {
-        return $this->formatNumber($this->subTotal(false) + $this->tax(false), $rounded);
+        return $this->formatNumber($this->subTotal(false) + $this->tax(false) + $this->shipping(false), $rounded);
     }
 
     public function count()
