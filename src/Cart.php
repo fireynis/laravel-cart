@@ -66,7 +66,7 @@ class Cart
         $this->autoDelete = $autoDelete;
     }
 
-    public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, $overrideTaxRate = false, $taxRate = 13)
+    public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, bool $overrideTaxRate = false, int $taxRate = 13, bool $overrideShipping = false, int $shippingCost = 0)
     {
         if (is_array($itemData) && $this->isMultidimensionalArray($itemData)) {
             foreach ($itemData as $itemDatum) {
@@ -92,6 +92,9 @@ class Cart
         }
         if ($overrideTaxRate) {
             $item->setTaxRate($taxRate);
+        }
+        if ($overrideShipping) {
+            $item->setShipping($shippingCost);
         }
 
         $item->identifier = md5($item->item_id . microtime() . uniqid());

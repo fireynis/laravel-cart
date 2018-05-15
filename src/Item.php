@@ -17,32 +17,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Fireynis\LaravelCart\Item
  *
- * @property int $id
- * @property int $cart_id
- * @property int $item_id
- * @property string $identifier
- * @property string $description
- * @property float $price
- * @property int $quantity
- * @property int $taxable
- * @property int $tax_rate
- * @property int $shipping
- * @property string|null $model_type
- * @property \Carbon\Carbon|null $created_at
- * @property \Carbon\Carbon|null $updated_at
- * @method static Builder|Item whereCartId($value)
- * @method static Builder|Item whereCreatedAt($value)
- * @method static Builder|Item whereDescription($value)
- * @method static Builder|Item whereId($value)
- * @method static Builder|Item whereIdentifier($value)
- * @method static Builder|Item whereItemId($value)
- * @method static Builder|Item whereModelType($value)
- * @method static Builder|Item wherePrice($value)
- * @method static Builder|Item whereQuantity($value)
- * @method static Builder|Item whereTaxRate($value)
- * @method static Builder|Item whereTaxable($value)
- * @method static Builder|Item whereUpdatedAt($value)
- * @mixin \Eloquent
  */
 class Item extends Model implements ItemInterface
 {
@@ -55,7 +29,7 @@ class Item extends Model implements ItemInterface
         $this->connection = config('cart.db_connection');
     }
 
-    public static function fromValues($id, $quantity, $price, $description, $taxable, $taxRate, $modelType = null)
+    public static function fromValues($id, $quantity, $price, $description, $taxable, $taxRate, $shipping, $modelType = null)
     {
         $model = new self();
         $model->item_id = $id;
@@ -73,11 +47,19 @@ class Item extends Model implements ItemInterface
     public function setTaxable(bool $taxable)
     {
         $this->taxable = $taxable;
+        $this->override_taxable = true;
     }
 
     public function setTaxRate(int $rate)
     {
         $this->tax_rate = $rate;
+        $this->override_tax_rate = true;
+    }
+
+    public function setShipping(int $rate)
+    {
+        $this->shipping = $rate;
+        $this->override_shipping = true;
     }
 
     public static function fromArray(array $data)
@@ -118,7 +100,7 @@ class Item extends Model implements ItemInterface
      */
     public function taxable(): bool
     {
-        if ($this->modelIsItem()) {
+        if ($this->modelIsItem() && !$this->override_taxable) {
             return $this->model()->taxable();
         }
         return $this->taxable;
@@ -131,7 +113,7 @@ class Item extends Model implements ItemInterface
      */
     public function taxRate(): int
     {
-        if ($this->modelIsItem()) {
+        if ($this->modelIsItem() && !$this->override_tax_rate) {
             return $this->model()->taxRate();
         }
         return $this->tax_rate;
