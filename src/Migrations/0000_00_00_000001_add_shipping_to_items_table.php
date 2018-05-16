@@ -14,9 +14,9 @@ class AddShippingToItemsTable extends Migration
     public function up()
     {
         Schema::connection(config('cart.db_connection'))->table(config('cart.items_table_name'), function (Blueprint $table) {
-            $table->bool('override_taxable')->after("quantity")->default(false);
-            $table->bool('override_tax_rate')->after("taxable")->default(false);
-            $table->bool('override_shipping')->after("tax_rate")->default(false);
+            $table->boolean('override_taxable')->after("quantity")->default(false);
+            $table->boolean('override_tax_rate')->after("taxable")->default(false);
+            $table->boolean('override_shipping')->after("tax_rate")->default(false);
             $table->float('shipping', 10, 2)->after("override_shipping")->default(0.00);
         });
 
