@@ -29,15 +29,19 @@ class Item extends Model implements ItemInterface
         $this->connection = config('cart.db_connection');
     }
 
-    public static function fromValues($id, $quantity, $price, $description, $taxable, $taxRate, $shipping, $modelType = null)
+    public static function fromValues($id, $quantity, $price, $description, $overrideTaxable, $taxable, $overrideTaxRate, $taxRate, $overrideShipping, $shipping, $modelType = null)
     {
         $model = new self();
         $model->item_id = $id;
         $model->quantity = $quantity;
         $model->price = $price;
         $model->description = $description;
+        $model->override_taxable = $overrideTaxable;
         $model->taxable = $taxable;
+        $model->override_tax_rate = $overrideTaxRate
         $model->tax_rate = $taxRate;
+        $model->override_shipping = $overrideShipping;
+        $model->shipping = $shipping;
         if (!is_null($modelType)) {
             $model->setModel($modelType);
         }
@@ -60,11 +64,6 @@ class Item extends Model implements ItemInterface
     {
         $this->shipping = $rate;
         $this->override_shipping = true;
-    }
-
-    public static function fromArray(array $data)
-    {
-        return Item::fromValues($data['id'], $data['quantity'], $data['price'], $data['description'], $data['taxable'], $data['taxRate'], $data['modelType']);
     }
 
     /**

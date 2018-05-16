@@ -1,0 +1,9 @@
+version: '3.1'
+
+services:
+  cart:
+    build: .
+    volumes:
+      - .:/home/site/
+    working_dir: /home/site
+    command: bash -c "composer install"

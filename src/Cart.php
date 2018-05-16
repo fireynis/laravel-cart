@@ -66,6 +66,17 @@ class Cart
         $this->autoDelete = $autoDelete;
     }
 
+    /**
+     * @param $itemData
+     * @param bool $overrideTaxable
+     * @param bool $taxable
+     * @param bool $overrideTaxRate
+     * @param int $taxRate
+     * @param bool $overrideShipping
+     * @param int $shippingCost
+     * @return $this
+     * @throws InvalidCartDataException
+     */
     public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, bool $overrideTaxRate = false, int $taxRate = 13, bool $overrideShipping = false, int $shippingCost = 0)
     {
         if (is_array($itemData) && $this->isMultidimensionalArray($itemData)) {
