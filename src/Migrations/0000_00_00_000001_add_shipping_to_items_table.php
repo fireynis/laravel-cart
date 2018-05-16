@@ -22,7 +22,7 @@ class AddShippingToItemsTable extends Migration
 
         Schema::connection(config('cart.db_connection'))->table(config('cart.cart_table_name'), function (Blueprint $table) {
             $table->boolean('override_shipping')->default(0.00)->after('auto_delete');
-            $table->float('shipping', 10, 2)->default(0.00)->after('shipping');
+            $table->float('shipping', 10, 2)->default(0.00)->after('override_shipping');
         });
     }
 
