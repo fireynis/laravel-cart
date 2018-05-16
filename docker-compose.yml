@@ -4,6 +4,6 @@ services:
   cart:
     build: .
     volumes:
-      - .:/home/site/
-    working_dir: /home/site
+      - .:/usr/src/myapp
+    working_dir: /usr/src/myapp
     command: bash -c "composer install"

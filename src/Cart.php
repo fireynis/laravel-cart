@@ -66,6 +66,11 @@ class Cart
         $this->autoDelete = $autoDelete;
     }
 
+    public function shippingOverride(float $cost)
+    {
+
+    }
+
     /**
      * @param $itemData
      * @param bool $overrideTaxable

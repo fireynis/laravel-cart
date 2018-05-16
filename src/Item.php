@@ -17,11 +17,26 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Fireynis\LaravelCart\Item
  *
+ * @property  int item_id
+ * @property  int quantity
+ * @property  float price
+ * @property  string description
+ * @property  boolean override_taxable
+ * @property  boolean taxable
+ * @property  boolean override_tax_rate
+ * @property  int tax_rate
+ * @property  boolean override_shipping
+ * @property  float shipping
+ * @property mixed model_type
  */
 class Item extends Model implements ItemInterface
 {
     protected $guarded = ['id', 'identifier'];
 
+    /**
+     * Item constructor.
+     * @param array $attributes
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -29,6 +44,21 @@ class Item extends Model implements ItemInterface
         $this->connection = config('cart.db_connection');
     }
 
+    /**
+     * @param $id
+     * @param $quantity
+     * @param $price
+     * @param $description
+     * @param $overrideTaxable
+     * @param $taxable
+     * @param $overrideTaxRate
+     * @param $taxRate
+     * @param $overrideShipping
+     * @param $shipping
+     * @param null $modelType
+     * @return Item
+     * @throws InvalidClassTypeException
+     */
     public static function fromValues($id, $quantity, $price, $description, $overrideTaxable, $taxable, $overrideTaxRate, $taxRate, $overrideShipping, $shipping, $modelType = null)
     {
         $model = new self();
@@ -38,7 +68,7 @@ class Item extends Model implements ItemInterface
         $model->description = $description;
         $model->override_taxable = $overrideTaxable;
         $model->taxable = $taxable;
-        $model->override_tax_rate = $overrideTaxRate
+        $model->override_tax_rate = $overrideTaxRate;
         $model->tax_rate = $taxRate;
         $model->override_shipping = $overrideShipping;
         $model->shipping = $shipping;
@@ -140,6 +170,10 @@ class Item extends Model implements ItemInterface
         return null;
     }
 
+    /**
+     * @param $modelType
+     * @throws InvalidClassTypeException
+     */
     public function setModel($modelType)
     {
         if (is_string($modelType) && class_exists($modelType)) {
@@ -164,7 +198,7 @@ class Item extends Model implements ItemInterface
      */
     public function shipping(): float
     {
-        if ($this->modelIsItem()) {
+        if ($this->modelIsItem() && !$this->override_shipping) {
             return $this->model()->shipping();
         }
         return $this->shipping;
