@@ -80,6 +80,7 @@ class Cart
      * @param bool $overrideShipping
      * @param int $shippingCost
      * @return $this
+     * @throws Exceptions\InvalidClassTypeException
      * @throws InvalidCartDataException
      */
     public function addItem($itemData, bool $overrideTaxable = false, bool $taxable = true, bool $overrideTaxRate = false, int $taxRate = 13, bool $overrideShipping = false, int $shippingCost = 0)
@@ -95,10 +96,10 @@ class Cart
         } elseif (array_key_exists('item', $itemData) && $itemData['item'] instanceof ItemInterface) {
             $model = $itemData['item'];
             $modelType = get_class($model);
-            $item = Item::fromValues($model->uniqueId(), $itemData['quantity'], $model->price(), $model->description(), $model->taxable(), config('cart.tax_rate'), $modelType);
+            $item = Item::fromValues($model->uniqueId(), $itemData['quantity'], $model->price(), $model->description(), $overrideTaxable, $model->taxable(), $overrideTaxRate, config('cart.tax_rate'), $overrideShipping, $model->shipping(), $modelType);
         } elseif (is_array($itemData)) {
             $this->validate($itemData);
-            $item = Item::fromValues($itemData['id'], $itemData['quantity'], $itemData['price'], $itemData['description'], $taxable, config('cart.tax_rate'), config('cart.associated_model'));
+            $item = Item::fromValues($itemData['id'], $itemData['quantity'], $itemData['price'], $itemData['description'], $overrideTaxable, $taxable, $overrideTaxRate, config('cart.tax_rate'), $overrideShipping, $shippingCost, config('cart.associated_model'));
         } else {
             throw new InvalidCartDataException("The data provided is not a model or array.");
         }
