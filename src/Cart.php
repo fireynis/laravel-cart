@@ -34,6 +34,10 @@ class Cart
 
     protected $autoDelete;
 
+    protected $override_shipping = false;
+
+    protected $shipping = 0.00;
+
     public function __construct(SessionManager $session)
     {
         $this->session = $session;
@@ -68,7 +72,9 @@ class Cart
 
     public function shippingOverride(float $cost)
     {
-
+        $this->override_shipping = true;
+        $this->shipping = $cost;
+        $this->saveToSession();
     }
 
     /**
@@ -145,7 +151,6 @@ class Cart
     public function getItem(string $identifier)
     {
         return $this->items->get($identifier);
-
     }
 
     public function subTotal(bool $rounded = true): float
@@ -160,6 +165,9 @@ class Cart
 
     public function shipping(bool $rounded = true): float
     {
+        if ($this->override_shipping) {
+            return $this->shipping;
+        }
         $shipping = 0.00;
         foreach ($this->cartItems() as $item) {
             $shipping += $item->shipping() * $item->quantity;
@@ -216,12 +224,18 @@ class Cart
                 [
                     'name' => $this->cartName,
                     'auto_delete' => $autoDelete,
+                    'override_shipping' => $this->override_shipping,
+                    'shipping' => $this->shipping,
                     'created_at' => $date,
                     'updated_at' => $date
                 ]
             );
         } else {
-            $this->getConnection()->where('name', $this->cartName)->update(['updated_at' => $date]);
+            $this->getConnection()->where('name', $this->cartName)->update([
+                'updated_at' => $date,
+                'override_shipping' => $this->override_shipping,
+                'shipping' => $this->shipping
+            ]);
         }
 
         Item::unguard();
@@ -301,6 +315,10 @@ class Cart
         return false;
     }
 
+    /**
+     * @param $item
+     * @throws InvalidCartDataException
+     */
     private function validate($item)
     {
         $diff = array_diff_key($this->mandatoryKeys, $item);
