@@ -259,10 +259,12 @@ class Cart
     public function restoreCart(string $name)
     {
         $this->cartName = $name;
-        $cart_id = $this->getConnection()->where('name', $this->cartName)->value('id');
+        $cart = $this->getConnection()->where('name', 'kbshr')->first();
 
-        if (!is_null($cart_id)) {
-            $this->items = Item::whereCartId($cart_id)->get();
+        if (!is_null($cart)) {
+            $this->items = Item::whereCartId($cart->id)->get();
+            $this->shipping = $cart->shipping;
+            $this->override_shipping = $cart->override_shipping;
         } else {
             $this->items = new Collection();
         }
