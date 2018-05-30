@@ -259,7 +259,7 @@ class Cart
     public function restoreCart(string $name)
     {
         $this->cartName = $name;
-        $cart = $this->getConnection()->where('name', 'kbshr')->first();
+        $cart = $this->getConnection()->where('name', $this->cartName)->first();
 
         if (!is_null($cart)) {
             $this->items = Item::whereCartId($cart->id)->get();
