@@ -44,7 +44,7 @@ class RemoveOldCarts extends Command
     public function handle()
     {
         $interval = \DateInterval::createFromDateString(config('cart.auto_delete_time'));
-        $today = Carbon::today();
+        $today = Carbon::now();
         $carts = DB::connection(config('cart.db_connection'))->table(config('cart.cart_table_name'))->get();
         foreach ($carts as $cart) {
             $dateUpdated = Carbon::createFromFormat("Y-m-d h:i:s", $cart->updated_at);
